@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFF3D6">
+
+    <!-- WEBSITE -->
 
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+
+    <!-- LOADING -->
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -15,6 +23,9 @@
         android:layout_height="44dp"
         android:layout_gravity="center"
         android:visibility="gone" />
+
+
+    <!-- ERROR SCREEN -->
 
     <LinearLayout
         android:id="@+id/errorLayout"
@@ -57,6 +68,28 @@
             android:layout_height="wrap_content"
             android:text="Retry"
             android:layout_marginTop="18dp" />
+
     </LinearLayout>
+
+
+    <!-- SPLASH SCREEN -->
+
+    <FrameLayout
+        android:id="@+id/splashLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFF3D6"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/splashImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/kaveri_splash_1"
+            android:scaleType="centerInside"
+            android:contentDescription="Kaveri Sweets" />
+
+    </FrameLayout>
 
 </FrameLayout>
