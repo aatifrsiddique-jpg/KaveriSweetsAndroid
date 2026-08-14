@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -15,15 +14,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.ValueCallback;
-import android.widget.FrameLayout;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.view.View;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,78 +29,35 @@ public class MainActivity extends AppCompatActivity {
             "https://kaverisweets.in/";
 
     private WebView webView;
+    private ProgressBar progressBar;
+    private LinearLayout errorLayout;
 
     private ValueCallback<Uri[]> fileChooserCallback;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
-
-        /*
-         * Edge-to-edge is enabled.
-         * We will manually keep WebView between
-         * Android status bar and navigation bar.
-         */
-        WindowCompat.setDecorFitsSystemWindows(
-                getWindow(),
-                false
-        );
-
-        /*
-         * Status bar
-         */
-        getWindow().setStatusBarColor(
-                android.graphics.Color.parseColor("#4B160D")
-        );
-
-        /*
-         * Navigation bar
-         */
-        getWindow().setNavigationBarColor(
-                android.graphics.Color.parseColor("#4B160D")
-        );
 
         setContentView(R.layout.activity_main);
 
+        // -------------------------------------------------
+        // FIND VIEWS
+        // -------------------------------------------------
+
         webView = findViewById(R.id.webView);
+        progressBar = findViewById(R.id.progressBar);
+        errorLayout = findViewById(R.id.errorLayout);
 
-        /*
-         * IMPORTANT
-         *
-         * Instead of adding padding to WebView,
-         * we change its actual top/bottom margins.
-         *
-         * This prevents the website's fixed header/footer
-         * from going underneath Android system bars.
-         */
-        ViewCompat.setOnApplyWindowInsetsListener(
-                webView,
-                (view, windowInsets) -> {
+        Button retryButton = findViewById(R.id.retryButton);
 
-                    Insets systemBars =
-                            windowInsets.getInsets(
-                                    WindowInsetsCompat.Type.systemBars()
-                            );
+        retryButton.setOnClickListener(v -> loadWebsite());
 
-                    FrameLayout.LayoutParams params =
-                            (FrameLayout.LayoutParams)
-                                    view.getLayoutParams();
+        // -------------------------------------------------
+        // WEBVIEW SETTINGS
+        // -------------------------------------------------
 
-                    params.topMargin = systemBars.top;
-                    params.bottomMargin = systemBars.bottom;
-
-                    view.setLayoutParams(params);
-
-                    return windowInsets;
-                }
-        );
-
-        ViewCompat.requestApplyInsets(webView);
-
-        /*
-         * WebView settings
-         */
         WebSettings settings = webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
@@ -123,9 +78,10 @@ public class MainActivity extends AppCompatActivity {
 
         settings.setMediaPlaybackRequiresUserGesture(true);
 
-        /*
-         * Cookies
-         */
+        // -------------------------------------------------
+        // COOKIES
+        // -------------------------------------------------
+
         CookieManager cookieManager =
                 CookieManager.getInstance();
 
@@ -136,88 +92,88 @@ public class MainActivity extends AppCompatActivity {
                 true
         );
 
-        /*
-         * WebView Client
-         */
-        webView.setWebViewClient(
-                new WebViewClient() {
+        // -------------------------------------------------
+        // WEBVIEW CLIENT
+        // -------------------------------------------------
 
-                    @Override
-                    public void onPageStarted(
-                            WebView view,
-                            String url,
-                            Bitmap favicon
-                    ) {
-                        super.onPageStarted(
-                                view,
-                                url,
-                                favicon
-                        );
-                    }
+        webView.setWebViewClient(new WebViewClient() {
 
-                    @Override
-                    public void onPageFinished(
-                            WebView view,
-                            String url
-                    ) {
-                        super.onPageFinished(
-                                view,
-                                url
-                        );
-                    }
+            @Override
+            public void onPageStarted(
+                    WebView view,
+                    String url,
+                    Bitmap favicon
+            ) {
 
-                    @Override
-                    public void onReceivedError(
-                            WebView view,
-                            WebResourceRequest request,
-                            WebResourceError error
-                    ) {
-                        super.onReceivedError(
-                                view,
-                                request,
-                                error
-                        );
+                super.onPageStarted(
+                        view,
+                        url,
+                        favicon
+                );
 
-                        /*
-                         * Only handle main page errors.
-                         */
-                        if (request.isForMainFrame()) {
+                progressBar.setVisibility(View.VISIBLE);
 
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "Unable to load website",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-                        }
-                    }
+                errorLayout.setVisibility(View.GONE);
+            }
 
-                    @Override
-                    public boolean shouldOverrideUrlLoading(
-                            WebView view,
-                            WebResourceRequest request
-                    ) {
+            @Override
+            public void onPageFinished(
+                    WebView view,
+                    String url
+            ) {
 
-                        return handleUrl(
-                                request.getUrl()
-                        );
-                    }
+                super.onPageFinished(
+                        view,
+                        url
+                );
 
-                    @Override
-                    public boolean shouldOverrideUrlLoading(
-                            WebView view,
-                            String url
-                    ) {
+                progressBar.setVisibility(View.GONE);
+            }
 
-                        return handleUrl(
-                                Uri.parse(url)
-                        );
-                    }
+            @Override
+            public void onReceivedError(
+                    WebView view,
+                    WebResourceRequest request,
+                    WebResourceError error
+            ) {
+
+                super.onReceivedError(
+                        view,
+                        request,
+                        error
+                );
+
+                if (request.isForMainFrame()) {
+
+                    progressBar.setVisibility(View.GONE);
+
+                    errorLayout.setVisibility(View.VISIBLE);
                 }
-        );
+            }
 
-        /*
-         * Chrome Client
-         */
+            @Override
+            public boolean shouldOverrideUrlLoading(
+                    WebView view,
+                    WebResourceRequest request
+            ) {
+
+                return handleUrl(request.getUrl());
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(
+                    WebView view,
+                    String url
+            ) {
+
+                return handleUrl(Uri.parse(url));
+            }
+        });
+
+        // -------------------------------------------------
+        // FILE UPLOAD
+        // -------------------------------------------------
+
         webView.setWebChromeClient(
                 new WebChromeClient() {
 
@@ -247,6 +203,8 @@ public class MainActivity extends AppCompatActivity {
                                     1001
                             );
 
+                            return true;
+
                         } catch (
                                 ActivityNotFoundException e
                         ) {
@@ -261,15 +219,50 @@ public class MainActivity extends AppCompatActivity {
 
                             return false;
                         }
-
-                        return true;
                     }
                 }
         );
 
-        /*
-         * Back button
-         */
+        // -------------------------------------------------
+        // DOWNLOADS
+        // -------------------------------------------------
+
+        webView.setDownloadListener(
+                (
+                        url,
+                        userAgent,
+                        contentDisposition,
+                        mimetype,
+                        contentLength
+                ) -> {
+
+                    Intent intent =
+                            new Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse(url)
+                            );
+
+                    try {
+
+                        startActivity(intent);
+
+                    } catch (
+                            ActivityNotFoundException e
+                    ) {
+
+                        Toast.makeText(
+                                MainActivity.this,
+                                "Unable to open download",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
+
+        // -------------------------------------------------
+        // BACK BUTTON
+        // -------------------------------------------------
+
         getOnBackPressedDispatcher()
                 .addCallback(
                         this,
@@ -290,15 +283,17 @@ public class MainActivity extends AppCompatActivity {
                         }
                 );
 
-        /*
-         * Open website
-         */
-        webView.loadUrl(HOME_URL);
+        // -------------------------------------------------
+        // LOAD WEBSITE
+        // -------------------------------------------------
+
+        loadWebsite();
     }
 
-    /*
-     * URL handling
-     */
+    // -----------------------------------------------------
+    // URL HANDLING
+    // -----------------------------------------------------
+
     private boolean handleUrl(Uri uri) {
 
         String scheme = uri.getScheme();
@@ -307,9 +302,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        /*
-         * Keep Kaveri Sweets website inside WebView
-         */
+        // Website URLs
         if (
                 scheme.equals("http") ||
                 scheme.equals("https")
@@ -325,12 +318,11 @@ public class MainActivity extends AppCompatActivity {
                     )
             ) {
 
+                // Keep Kaveri Sweets website inside WebView
                 return false;
             }
 
-            /*
-             * External website
-             */
+            // Open external website in browser
             try {
 
                 startActivity(
@@ -348,9 +340,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        /*
-         * External applications
-         */
+        // Phone / email / WhatsApp / UPI etc.
         if (
                 scheme.equals("tel") ||
                 scheme.equals("mailto") ||
@@ -373,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
             ) {
 
                 Toast.makeText(
-                        this,
+                        MainActivity.this,
                         "Required app is not installed",
                         Toast.LENGTH_SHORT
                 ).show();
@@ -385,9 +375,23 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    /*
-     * File picker result
-     */
+    // -----------------------------------------------------
+    // LOAD WEBSITE
+    // -----------------------------------------------------
+
+    private void loadWebsite() {
+
+        errorLayout.setVisibility(View.GONE);
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        webView.loadUrl(HOME_URL);
+    }
+
+    // -----------------------------------------------------
+    // FILE PICKER RESULT
+    // -----------------------------------------------------
+
     @Override
     protected void onActivityResult(
             int requestCode,
@@ -420,15 +424,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*
-     * Destroy WebView
-     */
+    // -----------------------------------------------------
+    // DESTROY
+    // -----------------------------------------------------
+
     @Override
     protected void onDestroy() {
 
         if (webView != null) {
 
+            webView.stopLoading();
+
+            webView.setWebChromeClient(null);
+
+            webView.setWebViewClient(null);
+
             webView.destroy();
+
+            webView = null;
         }
 
         super.onDestroy();
