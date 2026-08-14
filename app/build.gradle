@@ -10,8 +10,8 @@ android {
         applicationId 'in.kaverisweets.app'
         minSdk 23
         targetSdk 35
-        versionCode 4
-        versionName '1.0.3'
+        versionCode 3
+        versionName '1.0.2'
     }
 
     buildTypes {
@@ -19,10 +19,19 @@ android {
             minifyEnabled false
             shrinkResources false
         }
+
+        debug {
+            applicationIdSuffix '.debug'
+        }
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.activity:activity:1.10.1'
 }
