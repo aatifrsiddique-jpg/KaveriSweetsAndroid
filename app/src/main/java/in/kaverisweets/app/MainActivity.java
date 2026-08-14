@@ -10,14 +10,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.DownloadListener;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
-import android.webkit.ValueCallback;
-import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -27,221 +27,338 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String HOME_URL = "https://kaverisweets.in/";
+    private static final String HOME_URL =
+            "https://kaverisweets.in/";
 
     private WebView webView;
     private ProgressBar progressBar;
     private LinearLayout errorLayout;
-    private FrameLayout rootLayout;
-    private View splashLayout;
+    private FrameLayout splashLayout;
 
     private ValueCallback<Uri[]> fileChooserCallback;
 
-    private final Handler splashHandler = new Handler(Looper.getMainLooper());
+    private final Handler handler =
+            new Handler(Looper.getMainLooper());
+
     private boolean pageFinished = false;
-    private boolean minimumSplashTimeFinished = false;
+    private boolean openingScreenFinished = false;
+
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        /*
+         * Android Native Splash
+         */
+        SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
 
-        rootLayout = findViewById(R.id.rootLayout);
-        webView = findViewById(R.id.webView);
-        progressBar = findViewById(R.id.progressBar);
-        errorLayout = findViewById(R.id.errorLayout);
-        splashLayout = findViewById(R.id.splashLayout);
-
-        Button retryButton = findViewById(R.id.retryButton);
-
-        retryButton.setOnClickListener(v -> loadWebsite());
 
         /*
-         * Fix Android status bar + navigation bar overlap
+         * Find Views
          */
-        ViewCompat.setOnApplyWindowInsetsListener(rootLayout, (view, windowInsets) -> {
 
-            Insets systemBars = windowInsets.getInsets(
-                    WindowInsetsCompat.Type.systemBars()
-            );
+        webView = findViewById(R.id.webView);
 
-            view.setPadding(
-                    0,
-                    systemBars.top,
-                    0,
-                    systemBars.bottom
-            );
+        progressBar = findViewById(R.id.progressBar);
 
-            return windowInsets;
-        });
+        errorLayout = findViewById(R.id.errorLayout);
 
-        ViewCompat.requestApplyInsets(rootLayout);
+        splashLayout = findViewById(R.id.splashLayout);
+
+        Button retryButton =
+                findViewById(R.id.retryButton);
+
+
+        /*
+         * Retry
+         */
+
+        retryButton.setOnClickListener(
+                v -> loadWebsite()
+        );
+
+
+        /*
+         * Android system bars
+         *
+         * Website gets safe area.
+         * Opening screen stays FULL SCREEN.
+         */
+
+        ViewCompat.setOnApplyWindowInsetsListener(
+                webView,
+                (view, windowInsets) -> {
+
+                    Insets systemBars =
+                            windowInsets.getInsets(
+                                    WindowInsetsCompat.Type.systemBars()
+                            );
+
+                    view.setPadding(
+                            0,
+                            systemBars.top,
+                            0,
+                            systemBars.bottom
+                    );
+
+                    return windowInsets;
+                }
+        );
+
+        ViewCompat.requestApplyInsets(webView);
+
 
         /*
          * WebView settings
          */
-        WebSettings settings = webView.getSettings();
+
+        WebSettings settings =
+                webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
+
         settings.setDomStorageEnabled(true);
+
         settings.setDatabaseEnabled(true);
 
         settings.setAllowFileAccess(true);
+
         settings.setAllowContentAccess(true);
 
         settings.setBuiltInZoomControls(false);
+
         settings.setDisplayZoomControls(false);
 
         settings.setLoadWithOverviewMode(false);
+
         settings.setUseWideViewPort(false);
 
         settings.setSupportMultipleWindows(false);
+
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
         settings.setMediaPlaybackRequiresUserGesture(true);
 
+
         /*
          * Cookies
          */
-        CookieManager cookieManager = CookieManager.getInstance();
+
+        CookieManager cookieManager =
+                CookieManager.getInstance();
+
         cookieManager.setAcceptCookie(true);
-        cookieManager.setAcceptThirdPartyCookies(webView, true);
+
+        cookieManager.setAcceptThirdPartyCookies(
+                webView,
+                true
+        );
+
 
         /*
          * WebView Client
          */
-        webView.setWebViewClient(new WebViewClient() {
 
-            @Override
-            public void onPageStarted(
-                    WebView view,
-                    String url,
-                    Bitmap favicon
-            ) {
-                super.onPageStarted(view, url, favicon);
+        webView.setWebViewClient(
+                new WebViewClient() {
 
-                pageFinished = false;
+                    @Override
+                    public void onPageStarted(
+                            WebView view,
+                            String url,
+                            Bitmap favicon
+                    ) {
 
-                errorLayout.setVisibility(View.GONE);
-                progressBar.setVisibility(View.VISIBLE);
-            }
+                        super.onPageStarted(
+                                view,
+                                url,
+                                favicon
+                        );
 
-            @Override
-            public void onPageFinished(
-                    WebView view,
-                    String url
-            ) {
-                super.onPageFinished(view, url);
+                        pageFinished = false;
 
-                pageFinished = true;
+                        errorLayout.setVisibility(
+                                View.GONE
+                        );
 
-                progressBar.setVisibility(View.GONE);
+                        progressBar.setVisibility(
+                                View.VISIBLE
+                        );
+                    }
 
-                hideSplashIfReady();
-            }
 
-            @Override
-            public void onReceivedError(
-                    WebView view,
-                    WebResourceRequest request,
-                    WebResourceError error
-            ) {
-                super.onReceivedError(view, request, error);
+                    @Override
+                    public void onPageFinished(
+                            WebView view,
+                            String url
+                    ) {
 
-                if (request.isForMainFrame()) {
+                        super.onPageFinished(
+                                view,
+                                url
+                        );
 
-                    progressBar.setVisibility(View.GONE);
+                        pageFinished = true;
 
-                    errorLayout.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(
+                                View.GONE
+                        );
 
-                    hideSplash();
+                        /*
+                         * Website loaded.
+                         * Opening screen can now disappear
+                         * after minimum display time.
+                         */
+
+                        hideOpeningScreen();
+                    }
+
+
+                    @Override
+                    public void onReceivedError(
+                            WebView view,
+                            WebResourceRequest request,
+                            WebResourceError error
+                    ) {
+
+                        super.onReceivedError(
+                                view,
+                                request,
+                                error
+                        );
+
+                        if (request.isForMainFrame()) {
+
+                            progressBar.setVisibility(
+                                    View.GONE
+                            );
+
+                            errorLayout.setVisibility(
+                                    View.VISIBLE
+                            );
+
+                            hideOpeningScreenImmediately();
+                        }
+                    }
+
+
+                    @Override
+                    public boolean shouldOverrideUrlLoading(
+                            WebView view,
+                            WebResourceRequest request
+                    ) {
+
+                        return handleUrl(
+                                request.getUrl()
+                        );
+                    }
+
+
+                    @Override
+                    public boolean shouldOverrideUrlLoading(
+                            WebView view,
+                            String url
+                    ) {
+
+                        return handleUrl(
+                                Uri.parse(url)
+                        );
+                    }
                 }
-            }
+        );
 
-            @Override
-            public boolean shouldOverrideUrlLoading(
-                    WebView view,
-                    WebResourceRequest request
-            ) {
-                return handleUrl(request.getUrl());
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(
-                    WebView view,
-                    String url
-            ) {
-                return handleUrl(Uri.parse(url));
-            }
-        });
 
         /*
-         * WebChromeClient
+         * Chrome Client
          */
-        webView.setWebChromeClient(new WebChromeClient() {
 
-            @Override
-            public boolean onShowFileChooser(
-                    WebView webView,
-                    ValueCallback<Uri[]> filePathCallback,
-                    FileChooserParams fileChooserParams
-            ) {
+        webView.setWebChromeClient(
+                new WebChromeClient() {
 
-                if (fileChooserCallback != null) {
-                    fileChooserCallback.onReceiveValue(null);
+                    @Override
+                    public boolean onShowFileChooser(
+                            WebView webView,
+                            ValueCallback<Uri[]> filePathCallback,
+                            FileChooserParams fileChooserParams
+                    ) {
+
+                        if (fileChooserCallback != null) {
+
+                            fileChooserCallback
+                                    .onReceiveValue(null);
+                        }
+
+                        fileChooserCallback =
+                                filePathCallback;
+
+                        Intent intent =
+                                fileChooserParams
+                                        .createIntent();
+
+                        try {
+
+                            startActivityForResult(
+                                    intent,
+                                    1001
+                            );
+
+                        } catch (
+                                ActivityNotFoundException e
+                        ) {
+
+                            fileChooserCallback =
+                                    null;
+
+                            Toast.makeText(
+                                    MainActivity.this,
+                                    "File picker not available",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            return false;
+                        }
+
+                        return true;
+                    }
                 }
+        );
 
-                fileChooserCallback = filePathCallback;
-
-                Intent intent = fileChooserParams.createIntent();
-
-                try {
-
-                    startActivityForResult(
-                            intent,
-                            1001
-                    );
-
-                } catch (ActivityNotFoundException e) {
-
-                    fileChooserCallback = null;
-
-                    Toast.makeText(
-                            MainActivity.this,
-                            "File picker not available",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    return false;
-                }
-
-                return true;
-            }
-        });
 
         /*
-         * Download handling
+         * Downloads
          */
+
         webView.setDownloadListener(
-                (url, userAgent, contentDisposition, mimetype, contentLength) -> {
+                (url,
+                 userAgent,
+                 contentDisposition,
+                 mimetype,
+                 contentLength) -> {
 
-                    Intent intent = new Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse(url)
-                    );
+                    Intent intent =
+                            new Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse(url)
+                            );
 
                     try {
 
                         startActivity(intent);
 
-                    } catch (ActivityNotFoundException ignored) {
+                    } catch (
+                            ActivityNotFoundException ignored
+                    ) {
 
                         Toast.makeText(
                                 this,
@@ -252,77 +369,95 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
+
         /*
-         * Android back button
+         * Back button
          */
-        getOnBackPressedDispatcher().addCallback(
-                this,
-                new OnBackPressedCallback(true) {
 
-                    @Override
-                    public void handleOnBackPressed() {
+        getOnBackPressedDispatcher()
+                .addCallback(
+                        this,
+                        new OnBackPressedCallback(true) {
 
-                        if (webView.canGoBack()) {
+                            @Override
+                            public void handleOnBackPressed() {
 
-                            webView.goBack();
+                                if (webView.canGoBack()) {
 
-                        } else {
+                                    webView.goBack();
 
-                            finish();
+                                } else {
+
+                                    finish();
+                                }
+                            }
                         }
-                    }
-                }
-        );
+                );
+
 
         /*
-         * Start website
+         * Start Website
          */
+
         loadWebsite();
 
+
         /*
-         * Minimum splash display time
+         * Custom Opening Screen
          *
-         * 1.8 seconds
+         * Minimum 1.8 seconds.
          */
-        splashHandler.postDelayed(
+
+        handler.postDelayed(
                 () -> {
 
-                    minimumSplashTimeFinished = true;
+                    openingScreenFinished = true;
 
-                    hideSplashIfReady();
+                    hideOpeningScreen();
 
                 },
                 1800
         );
     }
 
+
     /*
      * URL handling
      */
+
     private boolean handleUrl(Uri uri) {
 
-        String scheme = uri.getScheme();
+        String scheme =
+                uri.getScheme();
 
         if (scheme == null) {
             return false;
         }
 
-        /*
-         * Website links
-         */
-        if (scheme.equals("http") || scheme.equals("https")) {
 
-            String host = uri.getHost();
+        if (
+                scheme.equals("http") ||
+                scheme.equals("https")
+        ) {
 
-            if (host != null &&
+            String host =
+                    uri.getHost();
+
+            if (
+                    host != null &&
                     (
-                            host.equals("kaverisweets.in") ||
-                            host.endsWith(".kaverisweets.in")
+                            host.equals(
+                                    "kaverisweets.in"
+                            ) ||
+                            host.endsWith(
+                                    ".kaverisweets.in"
+                            )
                     )
             ) {
 
                 return false;
             }
+
 
             try {
 
@@ -333,15 +468,15 @@ public class MainActivity extends AppCompatActivity {
                         )
                 );
 
-            } catch (ActivityNotFoundException ignored) {
+            } catch (
+                    ActivityNotFoundException ignored
+            ) {
             }
 
             return true;
         }
 
-        /*
-         * External apps
-         */
+
         if (
                 scheme.equals("tel") ||
                 scheme.equals("mailto") ||
@@ -359,7 +494,9 @@ public class MainActivity extends AppCompatActivity {
                         )
                 );
 
-            } catch (ActivityNotFoundException e) {
+            } catch (
+                    ActivityNotFoundException e
+            ) {
 
                 Toast.makeText(
                         this,
@@ -374,56 +511,89 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+
     /*
-     * Load website
+     * Load Website
      */
+
     private void loadWebsite() {
 
-        errorLayout.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
+        errorLayout.setVisibility(
+                View.GONE
+        );
+
+        progressBar.setVisibility(
+                View.VISIBLE
+        );
 
         pageFinished = false;
 
-        webView.loadUrl(HOME_URL);
+        webView.loadUrl(
+                HOME_URL
+        );
     }
 
+
     /*
-     * Hide splash only after:
+     * Hide Custom Opening Screen
      *
-     * 1. Website loaded
-     * 2. Minimum 1.8 sec passed
+     * Only after:
+     *
+     * 1.8 sec completed
+     * AND
+     * website loaded
      */
-    private void hideSplashIfReady() {
 
-        if (pageFinished && minimumSplashTimeFinished) {
+    private void hideOpeningScreen() {
 
-            hideSplash();
+        if (
+                openingScreenFinished &&
+                pageFinished
+        ) {
+
+            if (
+                    splashLayout != null &&
+                    splashLayout.getVisibility()
+                            == View.VISIBLE
+            ) {
+
+                splashLayout.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(
+                                () -> {
+
+                                    splashLayout
+                                            .setVisibility(
+                                                    View.GONE
+                                            );
+                                }
+                        )
+                        .start();
+            }
         }
     }
 
+
     /*
-     * Hide splash
+     * Error case
      */
-    private void hideSplash() {
 
-        if (splashLayout != null &&
-                splashLayout.getVisibility() == View.VISIBLE) {
+    private void hideOpeningScreenImmediately() {
 
-            splashLayout.animate()
-                    .alpha(0f)
-                    .setDuration(250)
-                    .withEndAction(() -> {
+        if (splashLayout != null) {
 
-                        splashLayout.setVisibility(View.GONE);
-
-                    })
-                    .start();
+            splashLayout.setVisibility(
+                    View.GONE
+            );
         }
     }
 
+
     /*
-     * File picker result
+     * File picker
      */
+
     @Override
     protected void onActivityResult(
             int requestCode,
@@ -449,19 +619,22 @@ public class MainActivity extends AppCompatActivity {
                                     data
                             );
 
-            fileChooserCallback.onReceiveValue(result);
+            fileChooserCallback
+                    .onReceiveValue(result);
 
             fileChooserCallback = null;
         }
     }
 
+
     /*
      * Destroy
      */
+
     @Override
     protected void onDestroy() {
 
-        splashHandler.removeCallbacksAndMessages(null);
+        handler.removeCallbacksAndMessages(null);
 
         if (webView != null) {
 
