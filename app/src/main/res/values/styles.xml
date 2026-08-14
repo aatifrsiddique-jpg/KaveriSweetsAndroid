@@ -2,7 +2,6 @@
 
 <resources>
 
-    <!-- Normal App Theme -->
     <style
         name="Theme.KaveriSweets"
         parent="android:style/Theme.Material.Light.NoActionBar">
@@ -20,23 +19,6 @@
         <item name="android:windowLightNavigationBar">false</item>
 
         <item name="android:windowActionModeOverlay">true</item>
-
-    </style>
-
-
-    <!-- Android Native Splash Theme -->
-    <style
-        name="Theme.KaveriSweets.Starting"
-        parent="Theme.SplashScreen">
-
-        <!-- Background of native splash -->
-        <item name="windowSplashScreenBackground">#FFF3D6</item>
-
-        <!-- Kaveri logo -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/kaveri_logo</item>
-
-        <!-- Theme after splash -->
-        <item name="postSplashScreenTheme">@style/Theme.KaveriSweets</item>
 
     </style>
 
