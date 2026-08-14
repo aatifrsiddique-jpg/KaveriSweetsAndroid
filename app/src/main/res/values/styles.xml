@@ -2,6 +2,7 @@
 
 <resources>
 
+    <!-- Normal App Theme -->
     <style
         name="Theme.KaveriSweets"
         parent="android:style/Theme.Material.Light.NoActionBar">
@@ -10,15 +11,31 @@
 
         <item name="android:colorAccent">#8A3B12</item>
 
-        <item name="android:statusBarColor">#4B160D</item>
-
-        <item name="android:navigationBarColor">#4B160D</item>
-
         <item name="android:windowLightStatusBar">false</item>
-
         <item name="android:windowLightNavigationBar">false</item>
 
+        <item name="android:statusBarColor">#4B160D</item>
+        <item name="android:navigationBarColor">#4B160D</item>
+
         <item name="android:windowActionModeOverlay">true</item>
+
+    </style>
+
+
+    <!-- Launch / Native Splash Theme -->
+    <style
+        name="Theme.KaveriSweets.Starting"
+        parent="Theme.SplashScreen">
+
+        <item name="windowSplashScreenBackground">#FFF3D6</item>
+
+        <item name="windowSplashScreenAnimatedIcon">
+            @drawable/kaveri_splash_1
+        </item>
+
+        <item name="postSplashScreenTheme">
+            @style/Theme.KaveriSweets
+        </item>
 
     </style>
 
