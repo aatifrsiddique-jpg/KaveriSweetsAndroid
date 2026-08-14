@@ -25,10 +25,6 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,16 +47,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        /*
-         * Edge-to-edge support
-         */
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
+        // Normal Android system window handling.
+        // No native SplashScreen and no edge-to-edge.
         setContentView(R.layout.activity_main);
 
-        /*
-         * Views
-         */
+        // Find views
         webView = findViewById(R.id.webView);
         progressBar = findViewById(R.id.progressBar);
         errorLayout = findViewById(R.id.errorLayout);
@@ -70,36 +61,10 @@ public class MainActivity extends AppCompatActivity {
 
         retryButton.setOnClickListener(v -> loadWebsite());
 
-        /*
-         * System bar insets
-         *
-         * This prevents the website from going underneath
-         * Android status bar and navigation bar.
-         */
-        ViewCompat.setOnApplyWindowInsetsListener(
-                webView,
-                (view, windowInsets) -> {
+        // -------------------------------------------------
+        // WEBVIEW SETTINGS
+        // -------------------------------------------------
 
-                    Insets systemBars = windowInsets.getInsets(
-                            WindowInsetsCompat.Type.systemBars()
-                    );
-
-                    view.setPadding(
-                            0,
-                            systemBars.top,
-                            0,
-                            systemBars.bottom
-                    );
-
-                    return windowInsets;
-                }
-        );
-
-        ViewCompat.requestApplyInsets(webView);
-
-        /*
-         * WebView settings
-         */
         WebSettings settings = webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
@@ -120,9 +85,10 @@ public class MainActivity extends AppCompatActivity {
 
         settings.setMediaPlaybackRequiresUserGesture(true);
 
-        /*
-         * Cookies
-         */
+        // -------------------------------------------------
+        // COOKIES
+        // -------------------------------------------------
+
         CookieManager cookieManager = CookieManager.getInstance();
 
         cookieManager.setAcceptCookie(true);
@@ -131,9 +97,10 @@ public class MainActivity extends AppCompatActivity {
                 true
         );
 
-        /*
-         * WebView Client
-         */
+        // -------------------------------------------------
+        // WEBVIEW CLIENT
+        // -------------------------------------------------
+
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
@@ -147,7 +114,6 @@ public class MainActivity extends AppCompatActivity {
                 pageFinished = false;
 
                 errorLayout.setVisibility(View.GONE);
-
                 progressBar.setVisibility(View.VISIBLE);
             }
 
@@ -200,9 +166,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /*
-         * Web Chrome Client
-         */
+        // -------------------------------------------------
+        // WEB CHROME CLIENT
+        // -------------------------------------------------
+
         webView.setWebChromeClient(new WebChromeClient() {
 
             @Override
@@ -244,18 +211,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /*
-         * Download handling
-         */
+        // -------------------------------------------------
+        // DOWNLOADS
+        // -------------------------------------------------
+
         webView.setDownloadListener(
                 (url, userAgent, contentDisposition, mimetype, contentLength) -> {
 
-                    Intent intent = new Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse(url)
-                    );
-
                     try {
+
+                        Intent intent = new Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(url)
+                        );
 
                         startActivity(intent);
 
@@ -270,9 +238,10 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        /*
-         * Android Back Button
-         */
+        // -------------------------------------------------
+        // BACK BUTTON
+        // -------------------------------------------------
+
         getOnBackPressedDispatcher().addCallback(
                 this,
                 new OnBackPressedCallback(true) {
@@ -292,17 +261,18 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        /*
-         * Start website
-         */
+        // -------------------------------------------------
+        // START WEBSITE
+        // -------------------------------------------------
+
         loadWebsite();
 
-        /*
-         * Splash minimum display time
-         *
-         * Website must also finish loading before
-         * splash disappears.
-         */
+        // -------------------------------------------------
+        // SPLASH
+        // Minimum 1.8 seconds
+        // AND website must be loaded
+        // -------------------------------------------------
+
         handler.postDelayed(
                 () -> {
 
@@ -315,9 +285,10 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    /*
-     * URL handling
-     */
+    // -----------------------------------------------------
+    // URL HANDLING
+    // -----------------------------------------------------
+
     private boolean handleUrl(Uri uri) {
 
         String scheme = uri.getScheme();
@@ -326,9 +297,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        /*
-         * Website URLs
-         */
+        // Kaveri website stays inside WebView
         if (scheme.equals("http") || scheme.equals("https")) {
 
             String host = uri.getHost();
@@ -343,6 +312,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
+            // Other websites open externally
             try {
 
                 startActivity(
@@ -358,9 +328,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        /*
-         * External apps
-         */
+        // External applications
         if (
                 scheme.equals("tel") ||
                 scheme.equals("mailto") ||
@@ -393,9 +361,10 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    /*
-     * Load website
-     */
+    // -----------------------------------------------------
+    // LOAD WEBSITE
+    // -----------------------------------------------------
+
     private void loadWebsite() {
 
         errorLayout.setVisibility(View.GONE);
@@ -407,17 +376,13 @@ public class MainActivity extends AppCompatActivity {
         webView.loadUrl(HOME_URL);
     }
 
-    /*
-     * Hide splash
-     *
-     * Both conditions required:
-     *
-     * 1.8 seconds completed
-     * AND
-     * Website loaded
-     */
+    // -----------------------------------------------------
+    // HIDE SPLASH
+    // -----------------------------------------------------
+
     private void hideSplash() {
 
+        // Don't hide until both conditions are true
         if (!splashTimeFinished || !pageFinished) {
             return;
         }
@@ -437,9 +402,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*
-     * Hide splash immediately on error
-     */
+    // -----------------------------------------------------
+    // HIDE SPLASH ON ERROR
+    // -----------------------------------------------------
+
     private void hideSplashImmediately() {
 
         if (splashLayout != null) {
@@ -448,9 +414,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*
-     * File picker result
-     */
+    // -----------------------------------------------------
+    // FILE PICKER RESULT
+    // -----------------------------------------------------
+
     @Override
     protected void onActivityResult(
             int requestCode,
@@ -481,15 +448,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*
-     * Destroy
-     */
+    // -----------------------------------------------------
+    // CLEANUP
+    // -----------------------------------------------------
+
     @Override
     protected void onDestroy() {
 
         handler.removeCallbacksAndMessages(null);
 
         if (webView != null) {
+
             webView.destroy();
         }
 
