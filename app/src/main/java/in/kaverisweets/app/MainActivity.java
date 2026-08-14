@@ -2,6 +2,7 @@ package in.kaverisweets.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -14,6 +15,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Keep app content below Android status/navigation bars
+        getWindow().getDecorView().setSystemUiVisibility(0);
 
         webView = new WebView(this);
 
