@@ -11,7 +11,10 @@
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="#FFF3D6"
+        android:overScrollMode="never" />
+
 
     <!-- LOADING -->
     <ProgressBar
@@ -21,7 +24,8 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
-    <!-- ERROR SCREEN -->
+
+    <!-- INTERNET ERROR -->
     <LinearLayout
         android:id="@+id/errorLayout"
         android:layout_width="match_parent"
@@ -66,21 +70,23 @@
 
     </LinearLayout>
 
-    <!-- CUSTOM KAVERI OPENING SCREEN -->
+
+    <!-- CUSTOM OPENING SCREEN -->
     <FrameLayout
         android:id="@+id/splashLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFF3D6"
-        android:clickable="true"
-        android:focusable="true">
+        android:visibility="visible"
+        android:elevation="20dp">
 
         <ImageView
             android:id="@+id/splashImage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="260dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center"
             android:src="@drawable/kaveri_splash_1"
-            android:scaleType="fitCenter"
+            android:scaleType="centerInside"
             android:contentDescription="Kaveri Sweets" />
 
     </FrameLayout>
