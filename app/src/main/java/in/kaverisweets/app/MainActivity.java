@@ -1,53 +1,38 @@
 package in.kaverisweets.app;
 
-import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
+import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.CookieManager;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-public class MainActivity extends AppCompatActivity {
-
-    private static final String HOME_URL =
-            "https://kaverisweets.in/";
+public class MainActivity extends Activity {
 
     private WebView webView;
-    private ProgressBar progressBar;
-    private LinearLayout errorLayout;
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
+        /*
+         * Keep content inside Android system bars.
+         */
+        getWindow()
+                .getDecorView()
+                .setSystemUiVisibility(0);
 
-        // ------------------------------------------------
-        // FIND VIEWS
-        // ------------------------------------------------
+        /*
+         * Create WebView
+         */
+        webView = new WebView(this);
 
-        webView = findViewById(R.id.webView);
-        progressBar = findViewById(R.id.progressBar);
-        errorLayout = findViewById(R.id.errorLayout);
+        setContentView(webView);
 
-        Button retryButton = findViewById(R.id.retryButton);
-
-        retryButton.setOnClickListener(v -> loadWebsite());
-
-        // ------------------------------------------------
-        // WEBVIEW SETTINGS
-        // ------------------------------------------------
-
+        /*
+         * WebView settings
+         */
         WebSettings settings = webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
@@ -63,15 +48,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setLoadWithOverviewMode(false);
         settings.setUseWideViewPort(false);
 
-        settings.setSupportMultipleWindows(false);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
-
-        settings.setMediaPlaybackRequiresUserGesture(true);
-
-        // ------------------------------------------------
-        // COOKIES
-        // ------------------------------------------------
-
+        /*
+         * Cookies
+         */
         CookieManager cookieManager =
                 CookieManager.getInstance();
 
@@ -82,85 +61,33 @@ public class MainActivity extends AppCompatActivity {
                 true
         );
 
-        // ------------------------------------------------
-        // WEBVIEW CLIENT
-        // ------------------------------------------------
+        /*
+         * WebView client
+         */
+        webView.setWebViewClient(
+                new WebViewClient()
+        );
 
-        webView.setWebViewClient(new WebViewClient() {
-
-            @Override
-            public void onPageStarted(
-                    WebView view,
-                    String url,
-                    Bitmap favicon
-            ) {
-                super.onPageStarted(view, url, favicon);
-
-                errorLayout.setVisibility(View.GONE);
-                progressBar.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onPageFinished(
-                    WebView view,
-                    String url
-            ) {
-                super.onPageFinished(view, url);
-
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onReceivedError(
-                    WebView view,
-                    WebResourceRequest request,
-                    WebResourceError error
-            ) {
-                super.onReceivedError(
-                        view,
-                        request,
-                        error
-                );
-
-                if (request.isForMainFrame()) {
-
-                    progressBar.setVisibility(
-                            View.GONE
-                    );
-
-                    errorLayout.setVisibility(
-                            View.VISIBLE
-                    );
-                }
-            }
-        });
-
-        // ------------------------------------------------
-        // LOAD WEBSITE
-        // ------------------------------------------------
-
-        loadWebsite();
+        /*
+         * Open website
+         */
+        webView.loadUrl(
+                "https://kaverisweets.in/"
+        );
     }
 
-    // ------------------------------------------------
-    // LOAD WEBSITE
-    // ------------------------------------------------
+    @Override
+    public void onBackPressed() {
 
-    private void loadWebsite() {
+        if (webView != null && webView.canGoBack()) {
 
-        if (webView == null) {
-            return;
+            webView.goBack();
+
+        } else {
+
+            super.onBackPressed();
         }
-
-        errorLayout.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
-
-        webView.loadUrl(HOME_URL);
     }
-
-    // ------------------------------------------------
-    // DESTROY
-    // ------------------------------------------------
 
     @Override
     protected void onDestroy() {
@@ -169,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
 
             webView.stopLoading();
             webView.destroy();
-
             webView = null;
         }
 
