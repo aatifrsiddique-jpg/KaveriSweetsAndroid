@@ -2,23 +2,57 @@ package in.kaverisweets.app;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.graphics.Color;
-import android.view.Gravity;
-import android.widget.TextView;
+import android.webkit.CookieManager;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
+
+    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TextView textView = new TextView(this);
+        webView = new WebView(this);
 
-        textView.setText("Kaveri Sweets");
-        textView.setTextSize(28);
-        textView.setTextColor(Color.rgb(75, 22, 13));
-        textView.setGravity(Gravity.CENTER);
+        setContentView(webView);
 
-        setContentView(textView);
+        WebSettings settings = webView.getSettings();
+
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+
+        settings.setLoadWithOverviewMode(false);
+        settings.setUseWideViewPort(false);
+
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(
+                webView,
+                true
+        );
+
+        webView.setWebViewClient(new WebViewClient());
+
+        webView.loadUrl("https://kaverisweets.in/");
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
