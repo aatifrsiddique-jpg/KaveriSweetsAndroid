@@ -5,16 +5,21 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
-    private FrameLayout openingScreen;
+    private View openingScreen;
 
     private final Handler handler =
             new Handler(Looper.getMainLooper());
@@ -25,13 +30,18 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * Keep Android system bars normal.
-         * This is the configuration that is
-         * currently working correctly.
+         * Android 15/16 edge-to-edge handling.
+         *
+         * We allow the window to receive system-bar
+         * insets, then keep ONLY the website WebView
+         * inside the safe area.
+         *
+         * Opening screen remains full screen.
          */
-        getWindow()
-                .getDecorView()
-                .setSystemUiVisibility(0);
+        WindowCompat.setDecorFitsSystemWindows(
+                getWindow(),
+                false
+        );
 
         setContentView(R.layout.activity_main);
 
@@ -40,6 +50,51 @@ public class MainActivity extends Activity {
          */
         webView = findViewById(R.id.webView);
         openingScreen = findViewById(R.id.openingScreen);
+
+        /*
+         * -------------------------------------------------
+         * SYSTEM BAR / SAFE AREA FIX
+         * -------------------------------------------------
+         *
+         * The website is moved below the Android status bar
+         * and above the Android navigation bar.
+         *
+         * The opening screen is NOT affected.
+         */
+        ViewCompat.setOnApplyWindowInsetsListener(
+                webView,
+                (view, windowInsets) -> {
+
+                    Insets systemBars =
+                            windowInsets.getInsets(
+                                    WindowInsetsCompat.Type.systemBars()
+                            );
+
+                    ViewGroup.LayoutParams params =
+                            view.getLayoutParams();
+
+                    if (params instanceof ViewGroup.MarginLayoutParams) {
+
+                        ViewGroup.MarginLayoutParams margins =
+                                (ViewGroup.MarginLayoutParams) params;
+
+                        margins.topMargin =
+                                systemBars.top;
+
+                        margins.bottomMargin =
+                                systemBars.bottom;
+
+                        margins.leftMargin = 0;
+                        margins.rightMargin = 0;
+
+                        view.setLayoutParams(margins);
+                    }
+
+                    return windowInsets;
+                }
+        );
+
+        ViewCompat.requestApplyInsets(webView);
 
         /*
          * WebView settings
@@ -96,7 +151,9 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * Hide opening screen
+     * -----------------------------------------------------
+     * HIDE OPENING SCREEN
+     * -----------------------------------------------------
      */
     private void hideOpeningScreen() {
 
@@ -118,7 +175,9 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * Back button
+     * -----------------------------------------------------
+     * BACK BUTTON
+     * -----------------------------------------------------
      */
     @Override
     public void onBackPressed() {
@@ -137,7 +196,9 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * Cleanup
+     * -----------------------------------------------------
+     * CLEANUP
+     * -----------------------------------------------------
      */
     @Override
     protected void onDestroy() {
