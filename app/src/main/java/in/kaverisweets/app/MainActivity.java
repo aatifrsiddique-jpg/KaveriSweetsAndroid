@@ -1,10 +1,14 @@
 package in.kaverisweets.app;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -25,16 +29,43 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * IMPORTANT:
-         * Keep normal Android system bars.
+         * EDGE-TO-EDGE
          *
-         * This is the configuration that was
-         * already working correctly.
+         * Required for modern Android versions.
+         * Splash screen can occupy the complete display.
          */
-        getWindow()
-                .getDecorView()
-                .setSystemUiVisibility(0);
+        Window window = getWindow();
 
+        if (Build.VERSION.SDK_INT >= 30) {
+
+            window.setDecorFitsSystemWindows(false);
+
+        } else {
+
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            );
+        }
+
+        /*
+         * Transparent system bars.
+         *
+         * Splash/background can reach the edges.
+         */
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+
+        if (Build.VERSION.SDK_INT >= 29) {
+
+            window.setStatusBarContrastEnforced(false);
+            window.setNavigationBarContrastEnforced(false);
+        }
+
+        /*
+         * Layout
+         */
         setContentView(R.layout.activity_main);
 
         /*
@@ -45,6 +76,74 @@ public class MainActivity extends Activity {
         openingScreen = findViewById(
                 R.id.openingScreen
         );
+
+        /*
+         * =================================================
+         * IMPORTANT PART
+         * =================================================
+         *
+         * Splash = FULL SCREEN
+         *
+         * WebView = SAFE AREA
+         *
+         * We do NOT put padding on the root layout.
+         * We put padding ONLY on WebView.
+         *
+         * Therefore the splash remains edge-to-edge,
+         * while the website stays away from the
+         * status/navigation bars.
+         */
+        if (Build.VERSION.SDK_INT >= 23) {
+
+            webView.setOnApplyWindowInsetsListener(
+                    (view, insets) -> {
+
+                        int topInset = 0;
+                        int bottomInset = 0;
+
+                        if (Build.VERSION.SDK_INT >= 30) {
+
+                            WindowInsets windowInsets =
+                                    insets;
+
+                            android.graphics.Insets bars =
+                                    windowInsets.getInsets(
+                                            WindowInsets.Type.statusBars()
+                                                    | WindowInsets.Type.navigationBars()
+                                    );
+
+                            topInset = bars.top;
+                            bottomInset = bars.bottom;
+
+                        } else {
+
+                            topInset =
+                                    insets.getSystemWindowInsetTop();
+
+                            bottomInset =
+                                    insets.getSystemWindowInsetBottom();
+                        }
+
+                        /*
+                         * Website top:
+                         * below status bar
+                         *
+                         * Website bottom:
+                         * above Android navigation bar
+                         */
+                        view.setPadding(
+                                0,
+                                topInset,
+                                0,
+                                bottomInset
+                        );
+
+                        return insets;
+                    }
+            );
+
+            webView.requestApplyInsets();
+        }
 
         /*
          * WebView settings
@@ -95,24 +194,18 @@ public class MainActivity extends Activity {
         /*
          * Opening screen
          *
-         * Show for 2.5 seconds.
+         * 2.5 seconds
          */
         handler.postDelayed(
-                new Runnable() {
-
-                    @Override
-                    public void run() {
-
-                        hideOpeningScreen();
-                    }
-
-                },
+                this::hideOpeningScreen,
                 2500
         );
     }
 
     /*
-     * Hide opening screen
+     * =================================================
+     * HIDE OPENING SCREEN
+     * =================================================
      */
     private void hideOpeningScreen() {
 
@@ -129,25 +222,22 @@ public class MainActivity extends Activity {
         openingScreen.animate()
                 .alpha(0f)
                 .setDuration(400)
-                .withEndAction(
-                        new Runnable() {
+                .withEndAction(() -> {
 
-                            @Override
-                            public void run() {
+                    openingScreen.setVisibility(
+                            View.GONE
+                    );
 
-                                openingScreen.setVisibility(
-                                        View.GONE
-                                );
+                    openingScreen.setAlpha(1f);
 
-                                openingScreen.setAlpha(1f);
-                            }
-                        }
-                )
+                })
                 .start();
     }
 
     /*
-     * Back button
+     * =================================================
+     * BACK BUTTON
+     * =================================================
      */
     @Override
     public void onBackPressed() {
@@ -166,7 +256,9 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * Cleanup
+     * =================================================
+     * CLEANUP
+     * =================================================
      */
     @Override
     protected void onDestroy() {
@@ -176,6 +268,8 @@ public class MainActivity extends Activity {
         if (webView != null) {
 
             webView.stopLoading();
+
+            webView.setWebViewClient(null);
 
             webView.destroy();
 
