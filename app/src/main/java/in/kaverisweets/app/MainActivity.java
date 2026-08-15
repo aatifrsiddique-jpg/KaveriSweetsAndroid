@@ -18,22 +18,23 @@ import android.widget.FrameLayout;
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private FrameLayout webContainer;
     private FrameLayout openingScreen;
 
     private final Handler handler =
             new Handler(Looper.getMainLooper());
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        /*
-         * EDGE-TO-EDGE
-         *
-         * Required for modern Android versions.
-         * Splash screen can occupy the complete display.
-         */
+
+        // =================================================
+        // EDGE TO EDGE
+        // =================================================
+
         Window window = getWindow();
 
         if (Build.VERSION.SDK_INT >= 30) {
@@ -49,11 +50,6 @@ public class MainActivity extends Activity {
             );
         }
 
-        /*
-         * Transparent system bars.
-         *
-         * Splash/background can reach the edges.
-         */
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 
@@ -63,91 +59,108 @@ public class MainActivity extends Activity {
             window.setNavigationBarContrastEnforced(false);
         }
 
-        /*
-         * Layout
-         */
+
+        // =================================================
+        // LAYOUT
+        // =================================================
+
         setContentView(R.layout.activity_main);
 
-        /*
-         * Views
-         */
-        webView = findViewById(R.id.webView);
+
+        // =================================================
+        // FIND VIEWS
+        // =================================================
+
+        webContainer = findViewById(
+                R.id.webContainer
+        );
+
+        webView = findViewById(
+                R.id.webView
+        );
 
         openingScreen = findViewById(
                 R.id.openingScreen
         );
 
-        /*
-         * =================================================
-         * IMPORTANT PART
-         * =================================================
-         *
-         * Splash = FULL SCREEN
-         *
-         * WebView = SAFE AREA
-         *
-         * We do NOT put padding on the root layout.
-         * We put padding ONLY on WebView.
-         *
-         * Therefore the splash remains edge-to-edge,
-         * while the website stays away from the
-         * status/navigation bars.
-         */
-        if (Build.VERSION.SDK_INT >= 23) {
 
-            webView.setOnApplyWindowInsetsListener(
-                    (view, insets) -> {
+        // =================================================
+        // SYSTEM INSETS
+        // =================================================
+        //
+        // IMPORTANT:
+        //
+        // We are NOT adding padding to WebView.
+        //
+        // We are changing the actual size/position
+        // of webContainer.
+        //
+        // Therefore a website element using:
+        //
+        // position: fixed;
+        // bottom: 0;
+        //
+        // will stop ABOVE Android's navigation bar.
+        //
+        // =================================================
 
-                        int topInset = 0;
-                        int bottomInset = 0;
+        View rootLayout =
+                findViewById(R.id.rootLayout);
 
-                        if (Build.VERSION.SDK_INT >= 30) {
+        rootLayout.setOnApplyWindowInsetsListener(
+                (view, insets) -> {
 
-                            WindowInsets windowInsets =
-                                    insets;
+                    int top = 0;
+                    int bottom = 0;
 
-                            android.graphics.Insets bars =
-                                    windowInsets.getInsets(
-                                            WindowInsets.Type.statusBars()
-                                                    | WindowInsets.Type.navigationBars()
-                                    );
+                    if (Build.VERSION.SDK_INT >= 30) {
 
-                            topInset = bars.top;
-                            bottomInset = bars.bottom;
+                        android.graphics.Insets systemBars =
+                                insets.getInsets(
+                                        WindowInsets.Type.systemBars()
+                                );
 
-                        } else {
+                        top = systemBars.top;
+                        bottom = systemBars.bottom;
 
-                            topInset =
-                                    insets.getSystemWindowInsetTop();
+                    } else {
 
-                            bottomInset =
-                                    insets.getSystemWindowInsetBottom();
-                        }
+                        top =
+                                insets.getSystemWindowInsetTop();
 
-                        /*
-                         * Website top:
-                         * below status bar
-                         *
-                         * Website bottom:
-                         * above Android navigation bar
-                         */
-                        view.setPadding(
-                                0,
-                                topInset,
-                                0,
-                                bottomInset
-                        );
-
-                        return insets;
+                        bottom =
+                                insets.getSystemWindowInsetBottom();
                     }
-            );
 
-            webView.requestApplyInsets();
-        }
 
-        /*
-         * WebView settings
-         */
+                    // -----------------------------------------
+                    // Resize WEBSITE container
+                    // -----------------------------------------
+
+                    FrameLayout.LayoutParams params =
+                            (FrameLayout.LayoutParams)
+                                    webContainer.getLayoutParams();
+
+                    params.leftMargin = 0;
+                    params.topMargin = top;
+                    params.rightMargin = 0;
+                    params.bottomMargin = bottom;
+
+                    webContainer.setLayoutParams(params);
+
+
+                    return insets;
+                }
+        );
+
+
+        rootLayout.requestApplyInsets();
+
+
+        // =================================================
+        // WEBVIEW SETTINGS
+        // =================================================
+
         WebSettings settings =
                 webView.getSettings();
 
@@ -167,9 +180,11 @@ public class MainActivity extends Activity {
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        /*
-         * Cookies
-         */
+
+        // =================================================
+        // COOKIES
+        // =================================================
+
         CookieManager cookieManager =
                 CookieManager.getInstance();
 
@@ -180,9 +195,11 @@ public class MainActivity extends Activity {
                 true
         );
 
-        /*
-         * Website
-         */
+
+        // =================================================
+        // WEBSITE
+        // =================================================
+
         webView.setWebViewClient(
                 new WebViewClient()
         );
@@ -191,22 +208,22 @@ public class MainActivity extends Activity {
                 "https://kaverisweets.in/"
         );
 
-        /*
-         * Opening screen
-         *
-         * 2.5 seconds
-         */
+
+        // =================================================
+        // OPENING SCREEN
+        // =================================================
+
         handler.postDelayed(
                 this::hideOpeningScreen,
                 2500
         );
     }
 
-    /*
-     * =================================================
-     * HIDE OPENING SCREEN
-     * =================================================
-     */
+
+    // =====================================================
+    // HIDE OPENING SCREEN
+    // =====================================================
+
     private void hideOpeningScreen() {
 
         if (openingScreen == null) {
@@ -234,11 +251,11 @@ public class MainActivity extends Activity {
                 .start();
     }
 
-    /*
-     * =================================================
-     * BACK BUTTON
-     * =================================================
-     */
+
+    // =====================================================
+    // BACK BUTTON
+    // =====================================================
+
     @Override
     public void onBackPressed() {
 
@@ -255,11 +272,11 @@ public class MainActivity extends Activity {
         }
     }
 
-    /*
-     * =================================================
-     * CLEANUP
-     * =================================================
-     */
+
+    // =====================================================
+    // CLEANUP
+    // =====================================================
+
     @Override
     protected void onDestroy() {
 
