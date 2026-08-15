@@ -2,10 +2,16 @@
 
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFF3D6">
+
+
+    <!--
+        =====================================================
+        WEBSITE
+        =====================================================
+    -->
 
     <WebView
         android:id="@+id/webView"
@@ -13,12 +19,26 @@
         android:layout_height="match_parent"
         android:background="#FFF3D6" />
 
+
+    <!--
+        =====================================================
+        LOADING
+        =====================================================
+    -->
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:layout_gravity="center"
         android:visibility="gone" />
+
+
+    <!--
+        =====================================================
+        ERROR SCREEN
+        =====================================================
+    -->
 
     <LinearLayout
         android:id="@+id/errorLayout"
@@ -30,12 +50,14 @@
         android:background="#FFF3D6"
         android:visibility="gone">
 
+
         <ImageView
             android:layout_width="180dp"
             android:layout_height="100dp"
             android:src="@drawable/kaveri_logo"
             android:scaleType="centerInside"
             android:contentDescription="Kaveri Sweets" />
+
 
         <TextView
             android:layout_width="wrap_content"
@@ -46,6 +68,7 @@
             android:textColor="#4B160D"
             android:layout_marginTop="18dp" />
 
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -55,6 +78,7 @@
             android:gravity="center"
             android:layout_marginTop="8dp" />
 
+
         <Button
             android:id="@+id/retryButton"
             android:layout_width="wrap_content"
@@ -63,5 +87,35 @@
             android:layout_marginTop="18dp" />
 
     </LinearLayout>
+
+
+    <!--
+        =====================================================
+        OPENING SCREEN
+        =====================================================
+        Full screen.
+        This is NOT affected by the WebView safe-area fix.
+    -->
+
+    <FrameLayout
+        android:id="@+id/openingScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFF3D6"
+        android:clickable="true"
+        android:focusable="true">
+
+
+        <ImageView
+            android:id="@+id/openingLogo"
+            android:layout_width="280dp"
+            android:layout_height="180dp"
+            android:layout_gravity="center"
+            android:src="@drawable/kaveri_splash_1"
+            android:scaleType="centerInside"
+            android:contentDescription="Kaveri Sweets" />
+
+    </FrameLayout>
+
 
 </FrameLayout>
