@@ -5,19 +5,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import android.widget.FrameLayout;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
-    private View openingScreen;
+    private FrameLayout openingScreen;
 
     private final Handler handler =
             new Handler(Looper.getMainLooper());
@@ -28,93 +28,167 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * Keep Android system bars normal.
+         * EDGE-TO-EDGE
+         *
+         * Splash screen can use the complete
+         * device display, including system-bar areas.
          */
-        getWindow()
-                .getDecorView()
-                .setSystemUiVisibility(0);
+        Window window = getWindow();
 
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+
+            window.setDecorFitsSystemWindows(false);
+
+        } else {
+
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            );
+        }
+
+        /*
+         * Transparent system bars.
+         *
+         * This allows the splash image/background
+         * to reach the complete screen.
+         */
+        window.setStatusBarColor(
+                android.graphics.Color.TRANSPARENT
+        );
+
+        window.setNavigationBarColor(
+                android.graphics.Color.TRANSPARENT
+        );
+
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+
+            window.setNavigationBarContrastEnforced(false);
+
+            window.setStatusBarContrastEnforced(false);
+        }
+
+        /*
+         * Keep system icons visible.
+         */
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+
+            WindowInsetsController controller =
+                    window.getInsetsController();
+
+            if (controller != null) {
+
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_DEFAULT
+                );
+            }
+
+        } else {
+
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            );
+        }
+
+        /*
+         * Layout
+         */
         setContentView(R.layout.activity_main);
 
         /*
-         * -------------------------------------------------
-         * FIND VIEWS
-         * -------------------------------------------------
+         * Views
          */
-
         webView = findViewById(R.id.webView);
 
-        openingScreen = findViewById(R.id.openingScreen);
-
-
-        /*
-         * -------------------------------------------------
-         * SYSTEM BAR FIX
-         * -------------------------------------------------
-         *
-         * Website content stays below the Android
-         * status bar and above the navigation bar.
-         *
-         * Opening screen is NOT affected.
-         */
-
-        ViewCompat.setOnApplyWindowInsetsListener(
-                webView,
-                (view, windowInsets) -> {
-
-                    Insets systemBars =
-                            windowInsets.getInsets(
-                                    WindowInsetsCompat.Type.systemBars()
-                            );
-
-                    view.setPadding(
-                            0,
-                            systemBars.top,
-                            0,
-                            systemBars.bottom
-                    );
-
-                    return windowInsets;
-                }
+        openingScreen = findViewById(
+                R.id.openingScreen
         );
 
-        ViewCompat.requestApplyInsets(webView);
+        /*
+         * IMPORTANT:
+         *
+         * Splash stays EDGE-TO-EDGE.
+         *
+         * Only WebView receives system-bar
+         * padding.
+         *
+         * Therefore:
+         *
+         * Splash = full screen
+         * Website = safe area
+         */
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
 
+            webView.setOnApplyWindowInsetsListener(
+                    (view, insets) -> {
+
+                        int top = 0;
+                        int bottom = 0;
+
+                        if (android.os.Build.VERSION.SDK_INT >= 30) {
+
+                            android.graphics.Insets systemBars =
+                                    insets.getInsets(
+                                            WindowInsets.Type.systemBars()
+                                    );
+
+                            top = systemBars.top;
+                            bottom = systemBars.bottom;
+
+                        } else {
+
+                            top = insets.getSystemWindowInsetTop();
+                            bottom = insets.getSystemWindowInsetBottom();
+                        }
+
+                        /*
+                         * Website gets safe space.
+                         *
+                         * Top:
+                         * Status bar ke neeche.
+                         *
+                         * Bottom:
+                         * Android navigation buttons ke upar.
+                         */
+                        view.setPadding(
+                                0,
+                                top,
+                                0,
+                                bottom
+                        );
+
+                        return insets;
+                    }
+            );
+
+            webView.requestApplyInsets();
+        }
 
         /*
-         * -------------------------------------------------
-         * WEBVIEW SETTINGS
-         * -------------------------------------------------
+         * WebView settings
          */
-
         WebSettings settings =
                 webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
-
         settings.setDomStorageEnabled(true);
-
         settings.setDatabaseEnabled(true);
 
         settings.setAllowFileAccess(true);
-
         settings.setAllowContentAccess(true);
 
         settings.setBuiltInZoomControls(false);
-
         settings.setDisplayZoomControls(false);
 
         settings.setLoadWithOverviewMode(false);
-
         settings.setUseWideViewPort(false);
 
-
         /*
-         * -------------------------------------------------
-         * COOKIES
-         * -------------------------------------------------
+         * Cookies
          */
-
         CookieManager cookieManager =
                 CookieManager.getInstance();
 
@@ -125,13 +199,9 @@ public class MainActivity extends Activity {
                 true
         );
 
-
         /*
-         * -------------------------------------------------
-         * WEBSITE
-         * -------------------------------------------------
+         * Website
          */
-
         webView.setWebViewClient(
                 new WebViewClient()
         );
@@ -140,28 +210,20 @@ public class MainActivity extends Activity {
                 "https://kaverisweets.in/"
         );
 
-
         /*
-         * -------------------------------------------------
-         * OPENING SCREEN
-         * -------------------------------------------------
+         * Opening screen
          *
-         * Shows for 2.5 seconds.
+         * 2.5 seconds
          */
-
         handler.postDelayed(
-                () -> hideOpeningScreen(),
+                this::hideOpeningScreen,
                 2500
         );
     }
 
-
     /*
-     * -----------------------------------------------------
-     * HIDE OPENING SCREEN
-     * -----------------------------------------------------
+     * Hide opening screen
      */
-
     private void hideOpeningScreen() {
 
         if (openingScreen == null) {
@@ -177,17 +239,15 @@ public class MainActivity extends Activity {
                             View.GONE
                     );
 
+                    openingScreen.setAlpha(1f);
+
                 })
                 .start();
     }
 
-
     /*
-     * -----------------------------------------------------
-     * BACK BUTTON
-     * -----------------------------------------------------
+     * Back button
      */
-
     @Override
     public void onBackPressed() {
 
@@ -204,13 +264,9 @@ public class MainActivity extends Activity {
         }
     }
 
-
     /*
-     * -----------------------------------------------------
-     * CLEANUP
-     * -----------------------------------------------------
+     * Cleanup
      */
-
     @Override
     protected void onDestroy() {
 
@@ -219,6 +275,8 @@ public class MainActivity extends Activity {
         if (webView != null) {
 
             webView.stopLoading();
+
+            webView.setWebViewClient(null);
 
             webView.destroy();
 
