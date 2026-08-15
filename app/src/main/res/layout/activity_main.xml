@@ -8,25 +8,31 @@
     android:background="#FFF3D6">
 
     <!--
-        WEBSITE
+        WEBSITE CONTAINER
 
-        WebView itself is edge-to-edge,
-        but MainActivity applies system-bar
-        padding ONLY to this view.
+        This container will be moved:
+        - below status bar
+        - above navigation bar
     -->
-    <WebView
-        android:id="@+id/webView"
+    <FrameLayout
+        android:id="@+id/webContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#FFF3D6"
-        android:overScrollMode="never" />
+        android:layout_height="match_parent">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFF3D6"
+            android:overScrollMode="never" />
+
+    </FrameLayout>
 
 
     <!--
         OPENING SCREEN
 
-        This layer remains completely edge-to-edge.
-        No system-bar padding is applied here.
+        This remains FULL SCREEN.
     -->
     <FrameLayout
         android:id="@+id/openingScreen"
