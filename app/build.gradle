@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'in.kaverisweets.app'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'in.kaverisweets.app'
         minSdk 23
-        targetSdk 34
+        targetSdk 36
         versionCode 4
         versionName '1.0.3'
     }
