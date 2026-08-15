@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,7 +12,6 @@ import android.webkit.WebViewClient;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends Activity {
@@ -30,37 +28,36 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * Android 15/16 edge-to-edge handling.
-         *
-         * We allow the window to receive system-bar
-         * insets, then keep ONLY the website WebView
-         * inside the safe area.
-         *
-         * Opening screen remains full screen.
+         * Keep Android system bars normal.
          */
-        WindowCompat.setDecorFitsSystemWindows(
-                getWindow(),
-                false
-        );
+        getWindow()
+                .getDecorView()
+                .setSystemUiVisibility(0);
 
         setContentView(R.layout.activity_main);
 
         /*
-         * Find views
+         * -------------------------------------------------
+         * FIND VIEWS
+         * -------------------------------------------------
          */
+
         webView = findViewById(R.id.webView);
+
         openingScreen = findViewById(R.id.openingScreen);
+
 
         /*
          * -------------------------------------------------
-         * SYSTEM BAR / SAFE AREA FIX
+         * SYSTEM BAR FIX
          * -------------------------------------------------
          *
-         * The website is moved below the Android status bar
-         * and above the Android navigation bar.
+         * Website content stays below the Android
+         * status bar and above the navigation bar.
          *
-         * The opening screen is NOT affected.
+         * Opening screen is NOT affected.
          */
+
         ViewCompat.setOnApplyWindowInsetsListener(
                 webView,
                 (view, windowInsets) -> {
@@ -70,25 +67,12 @@ public class MainActivity extends Activity {
                                     WindowInsetsCompat.Type.systemBars()
                             );
 
-                    ViewGroup.LayoutParams params =
-                            view.getLayoutParams();
-
-                    if (params instanceof ViewGroup.MarginLayoutParams) {
-
-                        ViewGroup.MarginLayoutParams margins =
-                                (ViewGroup.MarginLayoutParams) params;
-
-                        margins.topMargin =
-                                systemBars.top;
-
-                        margins.bottomMargin =
-                                systemBars.bottom;
-
-                        margins.leftMargin = 0;
-                        margins.rightMargin = 0;
-
-                        view.setLayoutParams(margins);
-                    }
+                    view.setPadding(
+                            0,
+                            systemBars.top,
+                            0,
+                            systemBars.bottom
+                    );
 
                     return windowInsets;
                 }
@@ -96,28 +80,41 @@ public class MainActivity extends Activity {
 
         ViewCompat.requestApplyInsets(webView);
 
+
         /*
-         * WebView settings
+         * -------------------------------------------------
+         * WEBVIEW SETTINGS
+         * -------------------------------------------------
          */
+
         WebSettings settings =
                 webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
+
         settings.setDomStorageEnabled(true);
+
         settings.setDatabaseEnabled(true);
 
         settings.setAllowFileAccess(true);
+
         settings.setAllowContentAccess(true);
 
         settings.setBuiltInZoomControls(false);
+
         settings.setDisplayZoomControls(false);
 
         settings.setLoadWithOverviewMode(false);
+
         settings.setUseWideViewPort(false);
 
+
         /*
-         * Cookies
+         * -------------------------------------------------
+         * COOKIES
+         * -------------------------------------------------
          */
+
         CookieManager cookieManager =
                 CookieManager.getInstance();
 
@@ -128,9 +125,13 @@ public class MainActivity extends Activity {
                 true
         );
 
+
         /*
-         * Website
+         * -------------------------------------------------
+         * WEBSITE
+         * -------------------------------------------------
          */
+
         webView.setWebViewClient(
                 new WebViewClient()
         );
@@ -139,22 +140,28 @@ public class MainActivity extends Activity {
                 "https://kaverisweets.in/"
         );
 
+
         /*
-         * Opening screen
+         * -------------------------------------------------
+         * OPENING SCREEN
+         * -------------------------------------------------
          *
-         * Show for 2.5 seconds.
+         * Shows for 2.5 seconds.
          */
+
         handler.postDelayed(
                 () -> hideOpeningScreen(),
                 2500
         );
     }
 
+
     /*
      * -----------------------------------------------------
      * HIDE OPENING SCREEN
      * -----------------------------------------------------
      */
+
     private void hideOpeningScreen() {
 
         if (openingScreen == null) {
@@ -174,11 +181,13 @@ public class MainActivity extends Activity {
                 .start();
     }
 
+
     /*
      * -----------------------------------------------------
      * BACK BUTTON
      * -----------------------------------------------------
      */
+
     @Override
     public void onBackPressed() {
 
@@ -195,11 +204,13 @@ public class MainActivity extends Activity {
         }
     }
 
+
     /*
      * -----------------------------------------------------
      * CLEANUP
      * -----------------------------------------------------
      */
+
     @Override
     protected void onDestroy() {
 
