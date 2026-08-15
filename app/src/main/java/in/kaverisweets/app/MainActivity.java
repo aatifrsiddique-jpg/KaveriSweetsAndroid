@@ -5,9 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -28,74 +25,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * EDGE-TO-EDGE
+         * IMPORTANT:
+         * Keep normal Android system bars.
          *
-         * Splash screen can use the complete
-         * device display, including system-bar areas.
+         * This is the configuration that was
+         * already working correctly.
          */
-        Window window = getWindow();
+        getWindow()
+                .getDecorView()
+                .setSystemUiVisibility(0);
 
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-
-            window.setDecorFitsSystemWindows(false);
-
-        } else {
-
-            window.getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            );
-        }
-
-        /*
-         * Transparent system bars.
-         *
-         * This allows the splash image/background
-         * to reach the complete screen.
-         */
-        window.setStatusBarColor(
-                android.graphics.Color.TRANSPARENT
-        );
-
-        window.setNavigationBarColor(
-                android.graphics.Color.TRANSPARENT
-        );
-
-        if (android.os.Build.VERSION.SDK_INT >= 29) {
-
-            window.setNavigationBarContrastEnforced(false);
-
-            window.setStatusBarContrastEnforced(false);
-        }
-
-        /*
-         * Keep system icons visible.
-         */
-        if (android.os.Build.VERSION.SDK_INT >= 30) {
-
-            WindowInsetsController controller =
-                    window.getInsetsController();
-
-            if (controller != null) {
-
-                controller.setSystemBarsBehavior(
-                        WindowInsetsController.BEHAVIOR_DEFAULT
-                );
-            }
-
-        } else {
-
-            window.getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            );
-        }
-
-        /*
-         * Layout
-         */
         setContentView(R.layout.activity_main);
 
         /*
@@ -106,66 +45,6 @@ public class MainActivity extends Activity {
         openingScreen = findViewById(
                 R.id.openingScreen
         );
-
-        /*
-         * IMPORTANT:
-         *
-         * Splash stays EDGE-TO-EDGE.
-         *
-         * Only WebView receives system-bar
-         * padding.
-         *
-         * Therefore:
-         *
-         * Splash = full screen
-         * Website = safe area
-         */
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
-
-            webView.setOnApplyWindowInsetsListener(
-                    (view, insets) -> {
-
-                        int top = 0;
-                        int bottom = 0;
-
-                        if (android.os.Build.VERSION.SDK_INT >= 30) {
-
-                            android.graphics.Insets systemBars =
-                                    insets.getInsets(
-                                            WindowInsets.Type.systemBars()
-                                    );
-
-                            top = systemBars.top;
-                            bottom = systemBars.bottom;
-
-                        } else {
-
-                            top = insets.getSystemWindowInsetTop();
-                            bottom = insets.getSystemWindowInsetBottom();
-                        }
-
-                        /*
-                         * Website gets safe space.
-                         *
-                         * Top:
-                         * Status bar ke neeche.
-                         *
-                         * Bottom:
-                         * Android navigation buttons ke upar.
-                         */
-                        view.setPadding(
-                                0,
-                                top,
-                                0,
-                                bottom
-                        );
-
-                        return insets;
-                    }
-            );
-
-            webView.requestApplyInsets();
-        }
 
         /*
          * WebView settings
@@ -185,6 +64,9 @@ public class MainActivity extends Activity {
 
         settings.setLoadWithOverviewMode(false);
         settings.setUseWideViewPort(false);
+
+        settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
         /*
          * Cookies
@@ -213,10 +95,18 @@ public class MainActivity extends Activity {
         /*
          * Opening screen
          *
-         * 2.5 seconds
+         * Show for 2.5 seconds.
          */
         handler.postDelayed(
-                this::hideOpeningScreen,
+                new Runnable() {
+
+                    @Override
+                    public void run() {
+
+                        hideOpeningScreen();
+                    }
+
+                },
                 2500
         );
     }
@@ -230,18 +120,29 @@ public class MainActivity extends Activity {
             return;
         }
 
+        if (openingScreen.getVisibility()
+                != View.VISIBLE) {
+
+            return;
+        }
+
         openingScreen.animate()
                 .alpha(0f)
                 .setDuration(400)
-                .withEndAction(() -> {
+                .withEndAction(
+                        new Runnable() {
 
-                    openingScreen.setVisibility(
-                            View.GONE
-                    );
+                            @Override
+                            public void run() {
 
-                    openingScreen.setAlpha(1f);
+                                openingScreen.setVisibility(
+                                        View.GONE
+                                );
 
-                })
+                                openingScreen.setAlpha(1f);
+                            }
+                        }
+                )
                 .start();
     }
 
@@ -275,8 +176,6 @@ public class MainActivity extends Activity {
         if (webView != null) {
 
             webView.stopLoading();
-
-            webView.setWebViewClient(null);
 
             webView.destroy();
 
