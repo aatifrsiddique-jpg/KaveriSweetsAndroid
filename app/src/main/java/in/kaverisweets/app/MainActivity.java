@@ -2,14 +2,22 @@ package in.kaverisweets.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private FrameLayout openingScreen;
+
+    private final Handler handler =
+            new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,23 +25,27 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         /*
-         * Keep content inside Android system bars.
+         * Keep Android system bars normal.
+         * This is the configuration that is
+         * currently working correctly.
          */
         getWindow()
                 .getDecorView()
                 .setSystemUiVisibility(0);
 
-        /*
-         * Create WebView
-         */
-        webView = new WebView(this);
+        setContentView(R.layout.activity_main);
 
-        setContentView(webView);
+        /*
+         * Find views
+         */
+        webView = findViewById(R.id.webView);
+        openingScreen = findViewById(R.id.openingScreen);
 
         /*
          * WebView settings
          */
-        WebSettings settings = webView.getSettings();
+        WebSettings settings =
+                webView.getSettings();
 
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -62,24 +74,59 @@ public class MainActivity extends Activity {
         );
 
         /*
-         * WebView client
+         * Website
          */
         webView.setWebViewClient(
                 new WebViewClient()
         );
 
-        /*
-         * Open website
-         */
         webView.loadUrl(
                 "https://kaverisweets.in/"
         );
+
+        /*
+         * Opening screen
+         *
+         * Show for 2.5 seconds.
+         */
+        handler.postDelayed(
+                () -> hideOpeningScreen(),
+                2500
+        );
     }
 
+    /*
+     * Hide opening screen
+     */
+    private void hideOpeningScreen() {
+
+        if (openingScreen == null) {
+            return;
+        }
+
+        openingScreen.animate()
+                .alpha(0f)
+                .setDuration(400)
+                .withEndAction(() -> {
+
+                    openingScreen.setVisibility(
+                            View.GONE
+                    );
+
+                })
+                .start();
+    }
+
+    /*
+     * Back button
+     */
     @Override
     public void onBackPressed() {
 
-        if (webView != null && webView.canGoBack()) {
+        if (
+                webView != null &&
+                webView.canGoBack()
+        ) {
 
             webView.goBack();
 
@@ -89,13 +136,20 @@ public class MainActivity extends Activity {
         }
     }
 
+    /*
+     * Cleanup
+     */
     @Override
     protected void onDestroy() {
+
+        handler.removeCallbacksAndMessages(null);
 
         if (webView != null) {
 
             webView.stopLoading();
+
             webView.destroy();
+
             webView = null;
         }
 
